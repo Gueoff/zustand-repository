@@ -1,63 +1,81 @@
-# zustand-store
+# zustand-repository
 
+A typed **repository pattern** for Zustand stores, with built-in loading and persistence helpers.
 This folder gives you helper functions to use [Zustand](https://github.com/pmndrs/zustand) stores through your app.
 
+---
 
-## Simple repository
+## ✨ Why zustand-repository?
 
-You can create a repository to store your data into a Record<key, entity> and manipulate them.
+- 📦 Store entities as a `Record<id, entity>`
+- 🔁 Built-in CRUD helpers
+- ⏳ Loading state per async operation
+- 💾 Easy persistence support
+- 🧠 Fully typed with TypeScript
+- 🧩 Composable with existing Zustand stores
+
+---
+
+## 📦 Installation
+
+```bash
+npm install zustand-repository
+```
+
+## Quick start
+
+Create a repository to store your data into a Record<key, entity> and manipulate them.
 To do this, you can create your store with createRepositoryStore function which will give you all you need.
 
 ```ts
-export const useBearStore = createRepositoryStore<Bear>(
-    // Store name
-    'MyBearStore',
-    // Key function to store your entity into a Record<key, value>
-    (bear: Bear) => bear.id,
-    // Extension for persisted state (see Persist section)
-    undefined,
-    // Additional features for the store (see Additional values section)
-    undefined
-)
+import { createRepositoryStore } from "zustand-repository"
+
+type Bear = { 
+    id: string
+    name: string
+}
+
+export const useBearStore = createRepositoryStore<Bear>('BearStore', (bear: Bear) => bear.id)
 ```
 
-Then use it into you component 
+Then in your component 
 
-```ts
+```tsx
 // useShallow when you want to retrieve array
 const bears = useBearStore(useShallow((state) => state.items()))
 const addOne = useBearStore((state) => state.addOne)
 const bearAggressive = useBearStore((state) => state.itemById('1'))
 ```
 
-### Persist
+### Persistence
 
 To persist data into your store, use the [persist](https://zustand.docs.pmnd.rs/middlewares/persist) parameter.
 
 ```ts
-{
-    onRehydrateStorage: () => (state, error) => {
-        // Trigger the default onRehydrateStorage to set the rehydrate status once it's done
-        state?.onRehydrateStorage(state, error)
-    },
-    partialize: (state) => ({
-        // Data you want to persist
-        itemsMap: state.itemsMap,
-    }),
-        // Storage to use
+export const useBearStore = createRepositoryStore<Bear>(
+    'BearStore',
+    (bear: Bear) => bear.id,
+    {
+        onRehydrateStorage: () => (state, error) => {
+            state?.onRehydrateStorage(state, error)
+        },
+        partialize: (state) => ({
+            itemsMap: state.itemsMap, // Data you want to persist
+        }),
         storage: createJSONStorage(() => storage)
-}
+    },
+)
+
 ```
 
-### Additional values
+### Extending the store
 
-Sometimes you want to add some variables, functions or just overrides some into your store. 
+You can add custom state and actions or overrides some.
 
 ```ts
 interface BearStore {
-    valueA?: string
-    valueB?: string
-    setValueA: (value: string) => void
+    country?: string
+    setCountry: (country: string) => void
 }
 
 export const useBearStore = createRepositoryStore<Bear, BearStore>(
@@ -65,9 +83,8 @@ export const useBearStore = createRepositoryStore<Bear, BearStore>(
     (bear: Bear) => bear.id,
     undefined,
     (set) => ({
-        valueA: undefined,
-        valueB: undefined,
-        setValueA: (value: string) => set({ valueA }, undefined, 'setValueA'),
+        country: undefined,
+        setCountry: (country: string) => set({ country }, undefined, 'setCountry'),
         addOne: (item: Bear, params?: ParamsRepository) => {
             set(
                 (state) => ({
@@ -76,7 +93,7 @@ export const useBearStore = createRepositoryStore<Bear, BearStore>(
                         ...state.itemsMap,
                         [item.id]: { ...item, isAggressive: true },
                     },
-                    valueB: 'random value added',
+                    country: 'France',
                 }),
                 undefined,
                 'addOne',
@@ -95,18 +112,13 @@ To do so, wrap your store creation into a function and call it into your specifi
 // Generic persisted bear store
 export const createBearStore = (storage: StateStorage) => {
     return createRepositoryStore<Bear>(
-        // Store name
-        'MyBearStore',
-        // Key function to store your entity into a Record<key, value>
+        'BearStore',
         (bear: Bear) => bear.id,
-        // Extension for persisted state (see Persist section)
         {
             onRehydrateStorage: () => (state, error) => {
-                // Trigger the default onRehydrateStorage to set the rehydrate status once it's done
                 state?.onRehydrateStorage(state, error)
             },
             partialize: (state) => ({
-                // Data you want to persist
                 itemsMap: state.itemsMap,
             }),
             // Storage to use
@@ -219,7 +231,6 @@ export const useBearStore = createRepositoryStore<Bear>(
     })),
 )
 ```
-
 
 ## Scoped store
 

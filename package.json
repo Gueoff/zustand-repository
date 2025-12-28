@@ -6,7 +6,7 @@
   "main": "dist/index.js",
   "type": "module",
   "types": "dist/index.d.ts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
     "build": "tsc",
     "check-types": "tsc --project tsconfig.json --noEmit",
@@ -21,7 +21,10 @@
     "type": "git"
   },
   "keywords": [
+    "react",
     "repository",
+    "state-management",
+    "typescript",
     "zustand"
   ],
   "devDependencies": {
