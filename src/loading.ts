@@ -2,7 +2,8 @@ import { StateCreator } from 'zustand/index'
 
 import { GetType, KeyType, SetType, StatusRepository } from './store.types'
 
-type LoaderID = string | number | Function | { code: string }
+type LoaderFn = (...args: unknown[]) => unknown
+type LoaderID = string | number | LoaderFn | { code: string }
 type Func<TArgs extends any[], TResult> = (...args: TArgs) => TResult
 
 /**
@@ -87,8 +88,6 @@ export const createBaseLoadingSlice: StateCreator<BaseLoadingStore, [], [], Base
 
       try {
         return await fn(...args)
-      } catch (error) {
-        throw error
       } finally {
         set(
           (state) => ({
