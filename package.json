@@ -1,14 +1,36 @@
 {
-  "name": "${PROJECT_NAME}",
-  "version": "1.0.0",
-  "description": "",
+  "author": "Geoffrey Desbrosses",
+  "description": "Helps to manage repository in your projects",
+  "license": "MIT",
   "main": "dist/index.js",
+  "name": "zustand-repository",
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "version": "0.1.1",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit"
   },
-  "dependencies": {},
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "url": "https://github.com/Gueoff/zustand-repository",
+    "type": "git"
+  },
+  "keywords": [
+    "zustand",
+    "repository"
+  ],
+  "prettier": {
+    "singleQuote": true
+  },
   "devDependencies": {
-    "typescript": "^5.5.3"
+    "typescript": "^5.7.3",
+    "zustand": "^5.0.8"
   },
-  "private": true
+  "peerDependencies": {
+    "zustand": ">=5.0.0"
+  }
 }
