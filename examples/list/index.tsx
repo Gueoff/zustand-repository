@@ -7,16 +7,7 @@ import { useShallow } from 'zustand/react/shallow'
 
 import { useEntityStore } from './entity.store'
 import { Entity } from './entity.type'
-
-/**
- * Generate random ID (test purpose)
- * @param length
- */
-function randomId(length = 8) {
-  return Math.random()
-    .toString(36)
-    .slice(2, 2 + length)
-}
+import { randomId } from './utils'
 
 function App() {
   const addOne = useEntityStore((state) => state.addOne)
