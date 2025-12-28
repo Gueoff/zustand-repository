@@ -24,7 +24,7 @@ type PersistParam<TEntity, U> = Omit<
 export function createScopedRepositoryStore<TEntity, U = NonNullable<unknown>>(
   storeName: string,
   getKey: (entity: TEntity) => KeyType,
-  extensions?: ExtensionsParam<TEntity, U>,
+  extensions?: ExtensionsParam<TEntity, U, BaseLoadingStore>,
 ) {
   return createStore<Store<TEntity, U>>()(
     subscribeWithSelector(
@@ -54,7 +54,7 @@ export function createPersistedRepositoryStore<TEntity, U = NonNullable<unknown>
   storeName: string,
   getKey: (entity: TEntity) => KeyType,
   persistOptions: PersistParam<TEntity, U>,
-  extensions?: ExtensionsParam<TEntity, U>,
+  extensions?: ExtensionsParam<TEntity, U, BaseLoadingStore & PersistStore>,
 ): UseBoundStore<StoreApi<StorePersisted<TEntity, U>>> {
   return create<StorePersisted<TEntity, U>>()(
     subscribeWithSelector(
@@ -90,19 +90,19 @@ export function createRepositoryStore<TEntity, U = NonNullable<unknown>>(
   storeName: string,
   getKey: (entity: TEntity) => KeyType,
   persistOptions: PersistParam<TEntity, U>,
-  extensions?: ExtensionsParam<TEntity, U>,
+  extensions?: ExtensionsParam<TEntity, U, BaseLoadingStore & PersistStore>,
 ): UseBoundStore<StoreApi<StorePersisted<TEntity, U>>>
 export function createRepositoryStore<TEntity, U = NonNullable<unknown>>(
   storeName: string,
   getKey: (entity: TEntity) => KeyType,
   persistOptions?: undefined,
-  extensions?: ExtensionsParam<TEntity, U>,
+  extensions?: ExtensionsParam<TEntity, U, BaseLoadingStore>,
 ): UseBoundStore<StoreApi<Store<TEntity, U>>>
 export function createRepositoryStore<TEntity, U = NonNullable<unknown>>(
   storeName: string,
   getKey: (entity: TEntity) => KeyType,
   persistOptions?: PersistParam<TEntity, U>,
-  extensions?: ExtensionsParam<TEntity, U>,
+  extensions?: ExtensionsParam<TEntity, U, BaseLoadingStore & PersistStore>,
 ) {
   if (persistOptions) {
     return createPersistedRepositoryStore(storeName, getKey, persistOptions, extensions)

@@ -23,9 +23,9 @@ interface BaseRepositoryStore<TEntity> {
 
 export type RepositoryStore<TEntity, U> = BaseRepositoryStore<TEntity> & U
 
-export type ExtensionsParam<TEntity, U> = (
-  set: SetType<RepositoryStore<TEntity, U>>,
-  get: GetType<RepositoryStore<TEntity, U>>,
+export type ExtensionsParam<TEntity, U, AdditionalStore> = (
+  set: SetType<RepositoryStore<TEntity, U> & AdditionalStore>,
+  get: GetType<RepositoryStore<TEntity, U> & AdditionalStore>,
 ) => U
 
 /**
@@ -36,7 +36,7 @@ export type ExtensionsParam<TEntity, U> = (
 export const createRepositorySlice =
   <TEntity, U = NonNullable<unknown>>(
     getKey: (entity: TEntity) => KeyType,
-    extensions?: ExtensionsParam<TEntity, U>,
+    extensions?: ExtensionsParam<TEntity, U, any>,
   ): StateCreator<RepositoryStore<TEntity, U>, [], [], RepositoryStore<TEntity, U>> =>
   (set: SetType<RepositoryStore<TEntity, U>>, get: GetType<RepositoryStore<TEntity, U>>) => ({
     itemsMap: {},
