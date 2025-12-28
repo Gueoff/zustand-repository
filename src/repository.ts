@@ -1,8 +1,8 @@
 import { StateCreator } from 'zustand'
 import { shallow } from 'zustand/vanilla/shallow'
 
-import { getNestedValue } from './utils/object'
 import { GetType, KeyType, ParamsRepository, SetType } from './store.types'
+import { getNestedValue } from './utils/object'
 
 interface BaseRepositoryStore<TEntity> {
   itemsMap: Record<KeyType, TEntity>

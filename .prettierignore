@@ -1,0 +1,7 @@
+node_modules
+out
+.next
+
+# Generated files
+core/src/assets/i18n/*.json
+core/src/client/api.ts

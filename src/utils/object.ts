@@ -4,11 +4,11 @@
  * @param path
  */
 export function getNestedValue<T, K extends string>(obj: T, path: K): unknown {
-    return path
-        .split('.')
-        .reduce<unknown>(
-            (acc, key) =>
-                acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[key] : undefined,
-            obj,
-        )
+  return path
+    .split('.')
+    .reduce<unknown>(
+      (acc, key) =>
+        acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[key] : undefined,
+      obj,
+    )
 }

@@ -1,16 +1,17 @@
 {
+  "name": "zustand-repository",
   "author": "Geoffrey Desbrosses",
-  "description": "Helps to manage repository in your projects",
+  "description": "Handle repository for you applications",
   "license": "MIT",
   "main": "dist/index.js",
-  "name": "zustand-repository",
   "type": "module",
   "types": "dist/index.d.ts",
   "version": "0.1.1",
   "scripts": {
     "build": "tsc",
     "lint": "eslint .",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "check-types": "tsc --project tsconfig.json --noEmit"
   },
   "files": [
     "dist"
@@ -20,15 +21,25 @@
     "type": "git"
   },
   "keywords": [
-    "zustand",
-    "repository"
+    "repository",
+    "zustand"
   ],
-  "prettier": {
-    "singleQuote": true
-  },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.16.0",
+    "eslint": "^9.16.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-better-styled-components": "^1.1.2",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "prettier": "^3.7.4",
+    "ts-node": "^10.9.2",
     "typescript": "^5.7.3",
-    "zustand": "^5.0.8"
+    "typescript-eslint": "^8.18.0",
+    "zustand": "^5.0.9"
   },
   "peerDependencies": {
     "zustand": ">=5.0.0"

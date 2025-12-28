@@ -2,7 +2,6 @@ import { StateCreator } from 'zustand/index'
 
 import { GetType, KeyType, SetType, StatusRepository } from './store.types'
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 type LoaderID = string | number | Function | { code: string }
 type Func<TArgs extends any[], TResult> = (...args: TArgs) => TResult
 
@@ -63,7 +62,16 @@ export const createBaseLoadingSlice: StateCreator<BaseLoadingStore, [], [], Base
     const id = getID(fn)
 
     const returnFn = async (...args: any[]): Promise<any> => {
-      const ids = [id, ...args.filter((arg: any) => typeof arg === 'string')]
+      const ids = [
+        id,
+        ...args.flatMap((arg) =>
+          Array.isArray(arg)
+            ? arg.filter((v) => typeof v === 'string')
+            : typeof arg === 'string'
+              ? [arg]
+              : [],
+        ),
+      ]
 
       set(
         (state) => ({
@@ -100,21 +108,6 @@ export const createBaseLoadingSlice: StateCreator<BaseLoadingStore, [], [], Base
     return returnFn
   },
 })
-
-/**
- * Compute the loading value to make it a variable instead of func
- */
-// export interface ComputedLoadingStore {
-//  isLoading: boolean
-// }
-// export const computedLoading = createComputed<BaseLoadingStore & any, ComputedLoadingStore>(
-//  (state) => ({
-//    isLoading:
-//      Object.values(state.loadingMap).filter((loading) => loading === StatusRepository.Loading)
-//        .length > 0,
-//  }),
-//)
-//)
 
 /**
  * Utils function to add operation on each function called "operationSomething"
