@@ -9,9 +9,9 @@
   "version": "0.1.1",
   "scripts": {
     "build": "tsc",
+    "check-types": "tsc --project tsconfig.json --noEmit",
     "lint": "eslint .",
-    "type-check": "tsc --noEmit",
-    "check-types": "tsc --project tsconfig.json --noEmit"
+    "prepublishOnly": "npm run build"
   },
   "files": [
     "dist"
