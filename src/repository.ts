@@ -13,7 +13,10 @@ interface BaseRepositoryStore<TEntity> {
   itemsByIds: (keys: KeyType[]) => TEntity[]
 
   addOne: (item: TEntity, params?: ParamsRepository) => void
-  addMany: (items: Record<KeyType, TEntity> | TEntity[], params?: ParamsRepository) => void
+  addMany: (
+    items: Record<KeyType, TEntity> | TEntity[],
+    params?: Pick<ParamsRepository, 'isFlush'>,
+  ) => void
   clear: () => void
   removeOne: (key: KeyType) => void
 }
@@ -55,25 +58,33 @@ export const createRepositorySlice =
     addOne: (item: TEntity, params?: ParamsRepository) => {
       const id = getKey(item)
 
-      // Same entity
-      if (params?.isShallow && shallow(item, get().itemById(id))) {
-        return
-      }
-
-      // Shallow fields are matching
-      if (params?.shallowFields?.length) {
-        const previousEntity = get().itemById(id)
-        const isIdentical = params?.shallowFields.every(
-          (field) => getNestedValue(item, field) === getNestedValue(previousEntity, field),
-        )
-
-        if (isIdentical) {
+      if (!params?.isClear) {
+        // Same entity with shallow comparison
+        if (params?.isShallow && shallow(item, get().itemById(id))) {
           return
+        }
+
+        // Shallow fields are matching
+        if (params?.shallowFields?.length) {
+          const previousEntity = get().itemById(id)
+          const isIdentical = params?.shallowFields.every(
+            (field) => getNestedValue(item, field) === getNestedValue(previousEntity, field),
+          )
+
+          if (isIdentical) {
+            return
+          }
+        }
+
+        // Remove entity
+        if (params?.removeKey) {
+          get().removeOne(params?.removeKey)
         }
       }
 
-      if (params?.removeKey) {
-        get().removeOne(params?.removeKey)
+      // Clear the items
+      if (params?.isFlush) {
+        get().clear()
       }
 
       set(
