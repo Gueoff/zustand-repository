@@ -3,112 +3,211 @@
 This folder gives you helper functions to use [Zustand](https://github.com/pmndrs/zustand) stores through your app.
 
 
-## Repository
+## Simple repository
 
-You can create a repository to store your data into a Record<key, entity>.
+You can create a repository to store your data into a Record<key, entity> and manipulate them.
 To do this, you can create your store with createRepositoryStore function which will give you all you need.
 
-The 1st parameter is the name of your store
-The 2nd parameter is the key function to store your entity into a Record<key, value>
-The 3rd parameter in an extension for persisted stores
-The 4th parameter is the additional features
-
-```js
-export const useOrderStore = createRepositoryStore<OrderResponse>('Order', (order: OrderResponse) => order.id)
+```ts
+export const useBearStore = createRepositoryStore<Bear>(
+    // Store name
+    'MyBearStore',
+    // Key function to store your entity into a Record<key, value>
+    (bear: Bear) => bear.id,
+    // Extension for persisted state (see Persist section)
+    undefined,
+    // Additional features for the store (see Additional values section)
+    undefined
+)
 ```
 
 Then use it into you component 
 
-```js
-const orderStore = useOrderStore()
-const orders = orderStore.items()
-```
-
-or to have only what you want
-
-```js
-const orders = useOrderStore(useShallow((state) => state.items()))
-const { itemMap, itemX, addOne } = useOrderStore(useShallow((state) => ({
-  itemMap: state.itemMap,
-  itemX: state.itemById('X'),
-  addOne: state.addOne,
-})))
+```ts
+// useShallow when you want to retrieve array
+const bears = useBearStore(useShallow((state) => state.items()))
+const addOne = useBearStore((state) => state.addOne)
+const bearAggressive = useBearStore((state) => state.itemById('1'))
 ```
 
 ### Persist
 
-To persist data into your store, use the [persist](https://zustand.docs.pmnd.rs/middlewares/persist) parameter (3rd). If you don't want to use it, just put undefined.
+To persist data into your store, use the [persist](https://zustand.docs.pmnd.rs/middlewares/persist) parameter.
 
-```js
+```ts
 {
-  onRehydrateStorage: () => (state, error) => {
-    state?.onRehydrateStorage(state, error) // Trigger the default onRehydrateStorage to set the rehydrate status once it's done
-  },
-  partialize: (state) => ({
-    itemsMap: state.itemsMap, // Data you want to persist
-  }),
-  storage: createJSONStorage(() => storage) // Storage to use
+    onRehydrateStorage: () => (state, error) => {
+        // Trigger the default onRehydrateStorage to set the rehydrate status once it's done
+        state?.onRehydrateStorage(state, error)
+    },
+    partialize: (state) => ({
+        // Data you want to persist
+        itemsMap: state.itemsMap,
+    }),
+        // Storage to use
+        storage: createJSONStorage(() => storage)
 }
 ```
-
-#### Specific params
-
-If you use the persist in different platforms, you wat to use a different storage. To do it, wrap your store creation into a function and call it into your specific platform.
-
-```js
-export const createSpecificStore = (storage: StateStorage) => {
-  return createRepositoryStore(...)
-}
-```
-
-```js
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { createSpecificStore } from 'core/modules/specific.store'
-
-export const useSpecificStore = createSpecificStore(AsyncStorage)
-```
-
-Do that trick for every specific parameters, like config, persist etc.
 
 ### Additional values
 
-Sometimes you want to add some variables or functions into your store. To do that use the 4th parameter to add specifi code
+Sometimes you want to add some variables, functions or just overrides some into your store. 
 
-```js
-export const useOrderStore = createRepositoryStore<OrderResponse>(
-  'Order',
-    (order: OrderResponse) => order.id,
+```ts
+interface BearStore {
+    valueA?: string
+    valueB?: string
+    setValueA: (value: string) => void
+}
+
+export const useBearStore = createRepositoryStore<Bear, BearStore>(
+    'BearStore',
+    (bear: Bear) => bear.id,
     undefined,
-    (set, get) => ({
-      valueA: undefined,
-      valueB: undefined,
-      setValueA: (valueA: any) => set({ valueA }, undefined, 'setValueA'),
+    (set) => ({
+        valueA: undefined,
+        valueB: undefined,
+        setValueA: (value: string) => set({ valueA }, undefined, 'setValueA'),
+        addOne: (item: Bear, params?: ParamsRepository) => {
+            set(
+                (state) => ({
+                    ...state,
+                    itemsMap: {
+                        ...state.itemsMap,
+                        [item.id]: { ...item, isAggressive: true },
+                    },
+                    valueB: 'random value added',
+                }),
+                undefined,
+                'addOne',
+            )
+        }
     }),
 )
 ```
 
-### Loader
-You have access to loading state in repository, you can see at any moment the state of each loader.
-For that, you have the loading helper in loading.ts. By default it's included into the repository store.
+## Repository with parameters
 
-If you want to create a store with loading state, just add the loading logic into your store into the 4th parameter
+Sometimes you want to pass params to you store creation (for specific platform, config).
+To do so, wrap your store creation into a function and call it into your specific platform.
 
-```js
-...createBaseLoadingSlice(set, get),
+```ts
+// Generic persisted bear store
+export const createBearStore = (storage: StateStorage) => {
+    return createRepositoryStore<Bear>(
+        // Store name
+        'MyBearStore',
+        // Key function to store your entity into a Record<key, value>
+        (bear: Bear) => bear.id,
+        // Extension for persisted state (see Persist section)
+        {
+            onRehydrateStorage: () => (state, error) => {
+                // Trigger the default onRehydrateStorage to set the rehydrate status once it's done
+                state?.onRehydrateStorage(state, error)
+            },
+            partialize: (state) => ({
+                // Data you want to persist
+                itemsMap: state.itemsMap,
+            }),
+            // Storage to use
+            storage: createJSONStorage(() => storage)
+        },
+    )
+}
 ```
 
-Do not forget to wrap your store with computedLoadingSlice() to access the main isLoading computed state.
+```tsx
+// React Native persisted bear store with async storage
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { createSpecificStore } from 'core/modules/specific.store'
 
-#### Create a loading
-To change the loading state, just wrap your named function with operation() and you'll see the state change.
-Then use isLoading or isLoadingKey into your component to display the logic.
+export const useBearStore = createBearStore(AsyncStorage)
+```
+
+## Loader slice repository
+
+Repository comes with a loading slice strategy to know the state of an async api call for example.
+To trigger a change of loading, just wrap a function with "operation" function then check the loading state in your store.
+The strategy is included in repositories by default, but you can add it in your non-repositories zustand store with createPersistSlice.
+
+Let's imagine a custom store which handle current user with login async function
+
+```ts
+interface AuthStore {
+    user?: User
+    setUser: (user: User) => void
+    login: (email: string, password: string) => User | undefined
+    getUser: (id: string) => User | undefined
+}
+
+export const useAuthStore = create<AuthStore>()(
+    persist(
+        (set, get, store) => ({
+            user: undefined,
+            setUser: (user: User) => {
+                set({user})
+            },
+            login: async (email: string, password: string) => {
+                return get().operation(async function loginOperation() {
+                    try {
+                        const response = await api.login(email, password)
+                        get().setUser(response.data)
+                        return response.data
+                    } catch (error) {
+                        logger.error(error)
+                    }
+                })()
+            },
+            getUser: async (id: string) => {
+                return get().operation(async function getUserOperation() {
+                    try {
+                        const response = await api.getUser(id)
+                        return response.data
+                    } catch (error) {
+                        logger.error(error)
+                    }
+                })(id) // Can be array
+            },
+            
+            // Add persist slice utils
+            ...createPersistSlice(set, get, store),
+    
+            // Add loading slice utils
+            ...createBaseLoadingSlice(set, get, store),
+        }),
+        {
+            name: 'userStore',
+            storage: createJSONStorage(() => AsyncStorage),
+            partialize: (state) => ({
+                user: state.user,
+            }),
+        }
+    ),
+    { name: 'userStore', store: 'userStore' },
+)
+```
+
+Then in your component
+```tsx
+    // Loading in all store
+    const isLoading = useEntityStore(state => state.isLoading())
+
+    // Loading for specific function "loginOperation"
+    const isLoginLoading = useEntityStore(state => state.isLoadingKey('loginOperation'))
+
+    // Loading for specific function "loginOperation"
+    const isGetUserLoading = useEntityStore(state => state.isLoadingKey('getUserOperation'))
+
+    // Loading for specific user "12"
+    const isAuthLoadingUser12 = useEntityStore(state => state.isLoadingKey('12'))
+```
 
 You can also wrap your repository with wrapOperation(). It will trigger the operation function for all named function with the keywork "operation".
 
-```js
-export const useOrderStore = createRepositoryStore<any>(
-  'Order',
-    (order: any) => order.id,
+```ts
+export const useBearStore = createRepositoryStore<Bear>(
+  'Bear',
+    (bear: Bear) => bear.id,
     undefined,
     wrapOperation((set) => ({
       valueA: undefined,
@@ -121,13 +220,14 @@ export const useOrderStore = createRepositoryStore<any>(
 )
 ```
 
-### Scoped store
 
-Sometimes you want to create multiple stores, one for ComponantA and one for ComponentB which don't share the same state.
+## Scoped store
+
+Sometimes you want to create multiple stores, one for ComponentA and one for ComponentB which don't share the same state.
 To do it, wrap your store creation into a function then use the createScope function.
 It will create one store as a ref, so you can use it multiple times.
 
-```js
+```ts
 const createScopedStore = () => {
   return create(...)
 }
