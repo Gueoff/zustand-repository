@@ -11,7 +11,7 @@ type Func<TArgs extends any[], TResult> = (...args: TArgs) => TResult
  * Get id as a string from anything which can be loading
  * @param id
  */
-export function getID(id: LoaderID): string {
+function getID(id: LoaderID): string {
   if (!id) {
     return 'unknown'
   }

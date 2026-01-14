@@ -8,15 +8,11 @@ import { GetType, SetType } from './store.types'
 // The final merged store types
 type StorePersisted<T> = T & LoadingStore & PersistStore
 type PersistParam<T> = Omit<PersistOptions<StorePersisted<T>, Partial<StorePersisted<T>>>, 'name'>
-type ExtensionsParam<TStore, TExt> = (
-  set: SetType<TStore & TExt>,
-  get: GetType<TStore & TExt>,
-) => TExt
 
-const createExtensionSlice =
-  <TStore, TExt>(extensions: ExtensionsParam<TStore, TExt>) =>
-  (set: SetType<TStore & TExt>, get: GetType<TStore & TExt>, _store: unknown): TExt =>
-    extensions(set, get)
+type ExtensionsParam<TStore, AdditionalSliceType> = (
+  set: SetType<TStore & AdditionalSliceType>,
+  get: GetType<TStore & AdditionalSliceType>,
+) => TStore
 
 /**
  * Used to create a typed persisted store with devtool and subscribers
@@ -24,22 +20,21 @@ const createExtensionSlice =
  * @param persistOptions
  * @param extensions
  */
-export function createPersistedStore<TBase extends object, TExt extends object>(
+export function createPersistedStore<TStore>(
   storeName: string,
-  persistOptions: PersistParam<TBase & TExt>,
-  extensions: ExtensionsParam<TBase & LoadingStore & PersistStore, TExt>,
+  persistOptions: PersistParam<TStore>,
+  extensions: ExtensionsParam<TStore, LoadingStore & PersistStore>,
 ): UseBoundStore<
-  Mutate<StoreApi<StorePersisted<TBase & TExt>>, [['zustand/subscribeWithSelector', never]]>
+  Mutate<StoreApi<TStore & LoadingStore & PersistStore>, [['zustand/subscribeWithSelector', never]]>
 > {
-  return create<StorePersisted<TBase & TExt>>()(
+  return create<TStore & LoadingStore & PersistStore>()(
     subscribeWithSelector(
       devtools(
         persist(
           (set, get, store) => ({
-            ...(get() as TBase),
             ...createLoadingSlice(set, get, store),
             ...createPersistSlice(set, get, store),
-            ...createExtensionSlice(extensions)(set, get, store),
+            ...extensions(set, get),
           }),
           {
             name: storeName,
