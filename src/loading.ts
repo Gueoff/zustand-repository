@@ -1,5 +1,6 @@
 import { StateCreator } from 'zustand/index'
 
+import { RepositoryStore } from './repository'
 import { GetType, KeyType, SetType, StatusRepository } from './store.types'
 
 type LoaderFn = (...args: unknown[]) => unknown
@@ -112,8 +113,12 @@ export const createBaseLoadingSlice: StateCreator<BaseLoadingStore, [], [], Base
  * Utils function to add operation on each function called "operationSomething"
  * @param storeInitializer
  */
-export function wrapOperation<T extends Record<string, any>>(
-  storeInitializer: (set: any, get: () => any, s?: any) => T,
+export function wrapOperation<S, T extends Record<string, any>>(
+  storeInitializer: (
+    set: SetType<RepositoryStore<S, T> & BaseLoadingStore>,
+    get: GetType<RepositoryStore<S, T> & BaseLoadingStore>,
+    s?: any,
+  ) => T,
 ): (set: any, get: () => any, s?: any) => T {
   return (set, get, s) => {
     const store = storeInitializer(set, get, s)
