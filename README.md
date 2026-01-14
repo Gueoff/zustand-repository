@@ -245,3 +245,7 @@ const createScopedStore = () => {
 
 export const useScopedStore = () => createScope(createScopedStore)
 ```
+
+## Avoid repository
+
+If you just want to use zustand store without repository functions, you can use functions like `createPersistedStore` which avoid repository

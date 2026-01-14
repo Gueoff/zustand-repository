@@ -30,7 +30,7 @@ export function getID(id: LoaderID): string {
   return id?.toString()
 }
 
-export interface BaseLoadingStore {
+export interface LoadingStore {
   loadingMap: Record<KeyType, StatusRepository>
 
   isLoading: () => boolean
@@ -44,10 +44,10 @@ export interface BaseLoadingStore {
  * @param set
  * @param get
  */
-export const createBaseLoadingSlice: StateCreator<BaseLoadingStore, [], [], BaseLoadingStore> = (
-  set: SetType<BaseLoadingStore>,
-  get: GetType<BaseLoadingStore>,
-): BaseLoadingStore => ({
+export const createLoadingSlice: StateCreator<LoadingStore, [], [], LoadingStore> = (
+  set: SetType<LoadingStore>,
+  get: GetType<LoadingStore>,
+): LoadingStore => ({
   loadingMap: {},
 
   isLoading: () =>
@@ -115,8 +115,8 @@ export const createBaseLoadingSlice: StateCreator<BaseLoadingStore, [], [], Base
  */
 export function wrapOperation<S, T extends Record<string, any>>(
   storeInitializer: (
-    set: SetType<RepositoryStore<S, T> & BaseLoadingStore>,
-    get: GetType<RepositoryStore<S, T> & BaseLoadingStore>,
+    set: SetType<RepositoryStore<S, T> & LoadingStore>,
+    get: GetType<RepositoryStore<S, T> & LoadingStore>,
     s?: any,
   ) => T,
 ): (set: any, get: () => any, s?: any) => T {

@@ -1,10 +1,11 @@
 export type { StatusRepository, ParamsRepository } from './store.types'
-export type { BaseLoadingStore } from './loading'
+export type { LoadingStore } from './loading'
 export type { PersistStore } from './persist'
 export type { RepositoryStore } from './repository'
 
-export { createBaseLoadingSlice, wrapOperation } from './loading'
-export { createPersistSlice, createPersistedStore } from './persist'
+export { createLoadingSlice, wrapOperation } from './loading'
+export { createPersistSlice } from './persist'
+export { createPersistedStore } from './persist.store'
 export {
   createScopedRepositoryStore,
   createPersistedRepositoryStore,
