@@ -109,32 +109,3 @@ export const createLoadingSlice: StateCreator<LoadingStore, [], [], LoadingStore
   },
 })
 
-/**
- * Utils function to add operation on each function called "operationSomething"
- * @param storeInitializer
- */
-export function wrapOperation<S, T extends Record<string, any>>(
-  storeInitializer: (
-    set: SetType<RepositoryStore<S, T> & LoadingStore>,
-    get: GetType<RepositoryStore<S, T> & LoadingStore>,
-    s?: any,
-  ) => T,
-): (set: any, get: () => any, s?: any) => T {
-  return (set, get, s) => {
-    const store = storeInitializer(set, get, s)
-    const wrappedStore = {} as T
-
-    for (const key in store) {
-      const value = store[key]
-
-      if (typeof value === 'function' && value.name?.toLowerCase()?.includes('operation')) {
-        wrappedStore[key] = ((...args: unknown[]) =>
-          get().operation(value)(...args)) as typeof value
-      } else {
-        wrappedStore[key] = value
-      }
-    }
-
-    return wrappedStore
-  }
-}

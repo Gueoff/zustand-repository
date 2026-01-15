@@ -3,7 +3,7 @@ export type { LoadingStore } from './loading'
 export type { PersistStore } from './persist'
 export type { RepositoryStore } from './repository'
 
-export { createLoadingSlice, wrapOperation } from './loading'
+export { createLoadingSlice } from './loading'
 export { createLoadingStore } from './loading.store'
 export { createPersistSlice } from './persist'
 export { createPersistedStore } from './persist.store'

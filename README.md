@@ -185,7 +185,7 @@ export const useAuthStore = create<AuthStore>()(
             ...createPersistSlice(set, get, store),
     
             // Add loading slice utils
-            ...createBaseLoadingSlice(set, get, store),
+            ...createLoadingSlice(set, get, store),
         }),
         {
             name: 'userStore',
@@ -214,23 +214,6 @@ Then in your component
     const isAuthLoadingUser12 = useEntityStore(state => state.isLoadingKey('12'))
 ```
 
-You can also wrap your repository with wrapOperation(). It will trigger the operation function for all named function with the keywork "operation".
-
-```ts
-export const useBearStore = createRepositoryStore<Bear>(
-  'Bear',
-    (bear: Bear) => bear.id,
-    undefined,
-    wrapOperation((set) => ({
-      valueA: undefined,
-      valueB: undefined,
-      setValueA: (valueA: any) => set({ valueA }, undefined, 'setValueA'),
-      fetchData: async function operationFetch(id: string) { // This function will trigger a loading change state
-        await fetch(id)
-      },
-    })),
-)
-```
 
 ## Scoped store
 
