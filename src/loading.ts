@@ -1,11 +1,18 @@
 import { StateCreator } from 'zustand/index'
 
-import { RepositoryStore } from './repository'
 import { GetType, KeyType, SetType, StatusRepository } from './store.types'
 
 type LoaderFn = (...args: unknown[]) => unknown
 type LoaderID = string | number | LoaderFn | { code: string }
-type Func<TArgs extends any[], TResult> = (...args: TArgs) => TResult
+type Func<TArgs extends unknown[], TResult> = (...args: TArgs) => TResult
+
+interface LoaderFnWithCode extends LoaderFn {
+  code: string
+}
+
+function hasCode(fn: LoaderFn): fn is LoaderFnWithCode {
+  return 'code' in fn && typeof (fn as LoaderFnWithCode).code === 'string'
+}
 
 /**
  * Get id as a string from anything which can be loading
@@ -19,8 +26,8 @@ function getID(id: LoaderID): string {
     return id
   }
   if (typeof id === 'function') {
-    if ((id as any).code) {
-      return (id as any).code
+    if (hasCode(id)) {
+      return id.code
     }
     if (id.name) {
       return id.name
@@ -36,7 +43,9 @@ export interface LoadingStore {
   isLoading: () => boolean
   isLoadingKey: (id: LoaderID) => boolean
   clearLoaders: () => void
-  operation: (fn: Func<any[], Promise<any>>) => (...args: any[]) => Promise<any>
+  operation: <TArgs extends unknown[], TResult>(
+    fn: Func<TArgs, Promise<TResult>>,
+  ) => Func<TArgs, Promise<TResult>> & { code: string }
 }
 
 /**
@@ -51,24 +60,27 @@ export const createLoadingSlice: StateCreator<LoadingStore, [], [], LoadingStore
   loadingMap: {},
 
   isLoading: () =>
-    Object.values(get().loadingMap).filter((loading) => loading === StatusRepository.Loading)
-      .length > 0,
+    Object.values(get().loadingMap).some((status) => status === StatusRepository.Loading),
 
   isLoadingKey: (id: LoaderID) => get().loadingMap[getID(id)] === StatusRepository.Loading,
 
   clearLoaders: () => {
+    if (Object.keys(get().loadingMap).length === 0) {
+      return
+    }
+
     set((state) => ({ ...state, loadingMap: {} }), undefined, 'clearLoaders')
   },
 
-  operation: (fn) => {
-    const id = getID(fn)
+  operation: <TArgs extends unknown[], TResult>(fn: Func<TArgs, Promise<TResult>>) => {
+    const id = getID(fn as LoaderFn)
 
-    const returnFn = async (...args: any[]): Promise<any> => {
+    const returnFn = async (...args: TArgs): Promise<TResult> => {
       const ids = [
         id,
         ...args.flatMap((arg) =>
           Array.isArray(arg)
-            ? arg.filter((v) => typeof v === 'string')
+            ? arg.filter((v): v is string => typeof v === 'string')
             : typeof arg === 'string'
               ? [arg]
               : [],
@@ -108,4 +120,3 @@ export const createLoadingSlice: StateCreator<LoadingStore, [], [], LoadingStore
     return returnFn
   },
 })
-

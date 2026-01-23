@@ -34,9 +34,9 @@ export type ExtensionsParam<TEntity, U, AdditionalStore> = (
  * @param extensions Additional values & functions
  */
 export const createRepositorySlice =
-  <TEntity, U = NonNullable<unknown>>(
+  <TEntity, U = NonNullable<unknown>, AdditionalStore = NonNullable<unknown>>(
     getKey: (entity: TEntity) => KeyType,
-    extensions?: ExtensionsParam<TEntity, U, any>,
+    extensions?: ExtensionsParam<TEntity, U, AdditionalStore>,
   ): StateCreator<RepositoryStore<TEntity, U>, [], [], RepositoryStore<TEntity, U>> =>
   (set: SetType<RepositoryStore<TEntity, U>>, get: GetType<RepositoryStore<TEntity, U>>) => ({
     itemsMap: {},
@@ -141,15 +141,24 @@ export const createRepositorySlice =
     },
 
     removeOne: (key: KeyType) => {
+      if (!(key in get().itemsMap)) {
+        return
+      }
+
       set(
-        (state) => ({
-          ...state,
-          itemsMap: Object.fromEntries(Object.entries(state.itemsMap).filter(([k]) => k !== key)),
-        }),
+        (state) => {
+          const { [key]: _, ...rest } = state.itemsMap
+          return { ...state, itemsMap: rest }
+        },
         undefined,
         'removeOne',
       )
     },
 
-    ...((extensions ? extensions(set, get) : {}) as U),
+    ...((extensions
+      ? extensions(
+          set as unknown as SetType<RepositoryStore<TEntity, U> & AdditionalStore>,
+          get as unknown as GetType<RepositoryStore<TEntity, U> & AdditionalStore>,
+        )
+      : {}) as U),
   })

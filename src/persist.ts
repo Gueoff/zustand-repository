@@ -5,7 +5,7 @@ import { GetType, SetType, StatusRepository } from './store.types'
 export interface PersistStore {
   statusRehydrate: StatusRepository
   isRehydrated: () => boolean
-  onRehydrateStorage: (state?: any, error?: unknown) => void
+  onRehydrateStorage: (state?: PersistStore, error?: unknown) => void
 }
 
 /**
