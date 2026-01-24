@@ -52,7 +52,16 @@ export const createRepositorySlice =
     },
 
     itemsByIds: (keys: KeyType[]) => {
-      return keys.map(get().itemById).filter((item): item is TEntity => item !== undefined)
+      // Single loop instead of map().filter() - avoids intermediate array allocation
+      const result: TEntity[] = []
+      const itemsMap = get().itemsMap
+      for (const key of keys) {
+        const item = itemsMap[key]
+        if (item !== undefined) {
+          result.push(item)
+        }
+      }
+      return result
     },
 
     addOne: (item: TEntity, params?: ParamsRepository) => {

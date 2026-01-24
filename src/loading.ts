@@ -76,23 +76,32 @@ export const createLoadingSlice: StateCreator<LoadingStore, [], [], LoadingStore
     const id = getID(fn as LoaderFn)
 
     const returnFn = async (...args: TArgs): Promise<TResult> => {
-      const ids = [
-        id,
-        ...args.flatMap((arg) =>
-          Array.isArray(arg)
-            ? arg.filter((v): v is string => typeof v === 'string')
-            : typeof arg === 'string'
-              ? [arg]
-              : [],
-        ),
-      ]
+      // Build ids array efficiently without intermediate allocations
+      const ids: string[] = [id]
+      for (const arg of args) {
+        if (typeof arg === 'string') {
+          ids.push(arg)
+        } else if (Array.isArray(arg)) {
+          for (const v of arg) {
+            if (typeof v === 'string') {
+              ids.push(v)
+            }
+          }
+        }
+      }
+
+      // Build loading entries directly without Object.fromEntries
+      const loadingEntries: Record<string, StatusRepository> = {}
+      for (const loaderID of ids) {
+        loadingEntries[getID(loaderID)] = StatusRepository.Loading
+      }
 
       set(
         (state) => ({
           ...state,
           loadingMap: {
             ...state.loadingMap,
-            ...Object.fromEntries(ids.map((id) => [getID(id), StatusRepository.Loading])),
+            ...loadingEntries,
           },
         }),
         false,
@@ -102,14 +111,19 @@ export const createLoadingSlice: StateCreator<LoadingStore, [], [], LoadingStore
       try {
         return await fn(...args)
       } finally {
+        // Use Set for O(1) lookup instead of Array.includes O(n)
+        const idsSet = new Set(ids)
+
         set(
-          (state) => ({
-            ...state,
-            loadingMap:
-              Object.fromEntries(
-                Object.entries(state.loadingMap).filter(([key]) => !ids.includes(key)),
-              ) || {},
-          }),
+          (state) => {
+            const newLoadingMap: Record<KeyType, StatusRepository> = {}
+            for (const key in state.loadingMap) {
+              if (!idsSet.has(key)) {
+                newLoadingMap[key] = state.loadingMap[key]
+              }
+            }
+            return { ...state, loadingMap: newLoadingMap }
+          },
           false,
           'stopLoading',
         )
