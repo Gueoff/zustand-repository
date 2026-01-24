@@ -16,8 +16,8 @@ interface BaseRepositoryStore<TEntity> {
 
   addOne: (item: TEntity, params?: ParamsRepository) => void
   addMany: (
-    items: Record<KeyType, TEntity> | TEntity[],
-    params?: Pick<ParamsRepository, 'isFlush'>,
+    items: TEntity[],
+    params?: Pick<ParamsRepository, 'isFlush' | 'isShallow' | 'shallowFields'>,
   ) => void
   clear: () => void
   removeOne: (key: KeyType) => void
@@ -133,25 +133,86 @@ export const createRepositorySlice =
       )
     },
 
-    addMany: (items: Record<KeyType, TEntity> | TEntity[], params?: ParamsRepository) => {
-      if (!items) {
-        return
+    addMany: (
+      items: TEntity[],
+      params?: Pick<ParamsRepository, 'isFlush' | 'isShallow' | 'shallowFields'>,
+    ) => {
+      if (!items || items.length === 0) {
+        return params?.isFlush ? get().clear() : undefined
       }
 
-      const itemsArray = Array.isArray(items) ? items : (Object.values(items) as TEntity[])
-      if (itemsArray.length === 0) {
-        if (params?.isFlush) {
-          get().clear()
+      // Early exit only if isShallow or shallowFields is set
+      if (!params?.isFlush && (params?.isShallow || params?.shallowFields?.length)) {
+        let hasChanges = false
+
+        if (params.isShallow) {
+          for (const item of items) {
+            const previousEntity = get().itemById(getKey(item))
+            if (!previousEntity || !shallow(item, previousEntity)) {
+              hasChanges = true
+              break
+            }
+          }
+        } else {
+          for (const item of items) {
+            const previousEntity = get().itemById(getKey(item))
+            if (!previousEntity) {
+              hasChanges = true
+              break
+            }
+
+            hasChanges = params?.shallowFields!.some(
+              (field) => getNestedValue(item, field) !== getNestedValue(previousEntity, field),
+            )
+
+            if (hasChanges) {
+              break
+            }
+          }
         }
-        return
+
+        if (!hasChanges) {
+          return
+        }
       }
 
       set(
         (state) => {
-          const newItemsMap: Record<KeyType, TEntity> = params?.isFlush ? {} : { ...state.itemsMap }
+          const newItemsMap: Record<KeyType, TEntity> = params?.isFlush
+            ? {}
+            : Object.assign({}, state.itemsMap)
 
-          for (const item of itemsArray) {
-            newItemsMap[getKey(item)] = item
+          if (params?.isFlush) {
+            for (const item of items) {
+              newItemsMap[getKey(item)] = item
+            }
+          } else if (params?.isShallow) {
+            for (const item of items) {
+              const key = getKey(item)
+              const previousEntity = state.itemsMap[key]
+              newItemsMap[key] =
+                previousEntity && shallow(item, previousEntity) ? previousEntity : item
+            }
+          } else if (params?.shallowFields?.length) {
+            const fields = params.shallowFields
+            for (const item of items) {
+              const key = getKey(item)
+              const previousEntity = state.itemsMap[key]
+              if (
+                previousEntity &&
+                fields.every(
+                  (field) => getNestedValue(item, field) === getNestedValue(previousEntity, field),
+                )
+              ) {
+                newItemsMap[key] = previousEntity
+              } else {
+                newItemsMap[key] = item
+              }
+            }
+          } else {
+            for (const item of items) {
+              newItemsMap[getKey(item)] = item
+            }
           }
 
           return { ...state, itemsMap: newItemsMap }
@@ -162,7 +223,7 @@ export const createRepositorySlice =
     },
 
     clear: () => {
-      if (Object.keys(get().itemsMap).length === 0) {
+      if (get().itemCount() === 0) {
         return
       }
 
