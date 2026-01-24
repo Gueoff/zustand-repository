@@ -11,6 +11,8 @@ interface BaseRepositoryStore<TEntity> {
   items: () => TEntity[]
   itemById: (key?: KeyType) => TEntity | undefined
   itemsByIds: (keys: KeyType[]) => TEntity[]
+  itemsWhere: (predicate: (item: TEntity, key: KeyType) => boolean) => TEntity[]
+  findItem: (predicate: (item: TEntity, key: KeyType) => boolean) => TEntity | undefined
 
   addOne: (item: TEntity, params?: ParamsRepository) => void
   addMany: (
@@ -43,16 +45,11 @@ export const createRepositorySlice =
 
     itemCount: () => Object.keys(get().itemsMap).length,
 
-    items: () => {
-      return Object.values(get().itemsMap)
-    },
+    items: () => Object.values(get().itemsMap),
 
-    itemById: (key?: KeyType) => {
-      return key ? get().itemsMap[key] : undefined
-    },
+    itemById: (key?: KeyType) => (key ? get().itemsMap[key] : undefined),
 
     itemsByIds: (keys: KeyType[]) => {
-      // Single loop instead of map().filter() - avoids intermediate array allocation
       const result: TEntity[] = []
       const itemsMap = get().itemsMap
       for (const key of keys) {
@@ -62,6 +59,29 @@ export const createRepositorySlice =
         }
       }
       return result
+    },
+
+    itemsWhere: (predicate: (item: TEntity, key: KeyType) => boolean) => {
+      const result: TEntity[] = []
+      const itemsMap = get().itemsMap
+      for (const key in itemsMap) {
+        const item = itemsMap[key]
+        if (predicate(item, key)) {
+          result.push(item)
+        }
+      }
+      return result
+    },
+
+    findItem: (predicate: (item: TEntity, key: KeyType) => boolean) => {
+      const itemsMap = get().itemsMap
+      for (const key in itemsMap) {
+        const item = itemsMap[key]
+        if (predicate(item, key)) {
+          return item
+        }
+      }
+      return undefined
     },
 
     addOne: (item: TEntity, params?: ParamsRepository) => {

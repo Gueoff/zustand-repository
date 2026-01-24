@@ -109,6 +109,85 @@ describe('createRepositorySlice', () => {
     })
   })
 
+  describe('itemsWhere', () => {
+    it('should return empty array when no items match', () => {
+      const store = createTestStore()
+      store.getState().addOne({ id: '1', name: 'Item 1', value: 10 })
+      store.getState().addOne({ id: '2', name: 'Item 2', value: 20 })
+
+      const result = store.getState().itemsWhere((item) => item.value! > 100)
+      expect(result).toEqual([])
+    })
+
+    it('should return matching items', () => {
+      const store = createTestStore()
+      store.getState().addOne({ id: '1', name: 'Item 1', value: 10 })
+      store.getState().addOne({ id: '2', name: 'Item 2', value: 20 })
+      store.getState().addOne({ id: '3', name: 'Item 3', value: 30 })
+
+      const result = store.getState().itemsWhere((item) => item.value! >= 20)
+      expect(result).toHaveLength(2)
+      expect(result.map((i) => i.id)).toContain('2')
+      expect(result.map((i) => i.id)).toContain('3')
+    })
+
+    it('should provide key as second argument', () => {
+      const store = createTestStore()
+      store.getState().addOne({ id: '1', name: 'Item 1' })
+      store.getState().addOne({ id: '2', name: 'Item 2' })
+
+      const result = store.getState().itemsWhere((_, key) => key === '1')
+      expect(result).toHaveLength(1)
+      expect(result[0].id).toBe('1')
+    })
+
+    it('should return all items when predicate always returns true', () => {
+      const store = createTestStore()
+      store.getState().addOne({ id: '1', name: 'Item 1' })
+      store.getState().addOne({ id: '2', name: 'Item 2' })
+
+      const result = store.getState().itemsWhere(() => true)
+      expect(result).toHaveLength(2)
+    })
+  })
+
+  describe('findItem', () => {
+    it('should return undefined when no item matches', () => {
+      const store = createTestStore()
+      store.getState().addOne({ id: '1', name: 'Item 1', value: 10 })
+
+      const result = store.getState().findItem((item) => item.value! > 100)
+      expect(result).toBeUndefined()
+    })
+
+    it('should return first matching item', () => {
+      const store = createTestStore()
+      store.getState().addOne({ id: '1', name: 'Item 1', value: 10 })
+      store.getState().addOne({ id: '2', name: 'Item 2', value: 20 })
+      store.getState().addOne({ id: '3', name: 'Item 3', value: 30 })
+
+      const result = store.getState().findItem((item) => item.value! >= 20)
+      expect(result).toBeDefined()
+      expect(['2', '3']).toContain(result!.id)
+    })
+
+    it('should provide key as second argument', () => {
+      const store = createTestStore()
+      store.getState().addOne({ id: '1', name: 'Item 1' })
+      store.getState().addOne({ id: '2', name: 'Item 2' })
+
+      const result = store.getState().findItem((_, key) => key === '2')
+      expect(result).toBeDefined()
+      expect(result!.id).toBe('2')
+    })
+
+    it('should return undefined on empty store', () => {
+      const store = createTestStore()
+      const result = store.getState().findItem(() => true)
+      expect(result).toBeUndefined()
+    })
+  })
+
   describe('addOne', () => {
     it('should add a single item', () => {
       const store = createTestStore()
