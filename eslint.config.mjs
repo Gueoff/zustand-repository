@@ -71,8 +71,10 @@ export const baseConfig = tseslint.config(
         {
           args: 'all',
           argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
           caughtErrors: 'all',
           caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
         },
       ],
 

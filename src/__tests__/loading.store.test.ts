@@ -1,7 +1,6 @@
 import { jest } from '@jest/globals'
 
 import { createLoadingStore } from '../loading.store'
-import { StatusRepository } from '../store.types'
 
 interface CustomStore {
   counter: number

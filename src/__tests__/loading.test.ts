@@ -143,7 +143,6 @@ describe('createLoadingSlice', () => {
 
     it('should be a no-op when loadingMap is already empty', () => {
       const store = createTestStore()
-      const initialState = store.getState()
       store.getState().clearLoaders()
       expect(store.getState().loadingMap).toEqual({})
     })
@@ -238,7 +237,9 @@ describe('createLoadingSlice', () => {
 
     it('should preserve the return value of the wrapped function', async () => {
       const store = createTestStore()
-      const mockFn = jest.fn<() => Promise<{ data: number[] }>>().mockResolvedValue({ data: [1, 2, 3] })
+      const mockFn = jest
+        .fn<() => Promise<{ data: number[] }>>()
+        .mockResolvedValue({ data: [1, 2, 3] })
 
       const wrappedFn = store.getState().operation(mockFn)
       const result = await wrappedFn()
@@ -248,15 +249,74 @@ describe('createLoadingSlice', () => {
 
     it('should pass arguments to the wrapped function', async () => {
       const store = createTestStore()
-      const mockFn = jest.fn<(a: number, b: string) => Promise<string>>().mockImplementation(async (a, b) => {
-        return `${a}-${b}`
-      })
+      const mockFn = jest
+        .fn<(a: number, b: string) => Promise<string>>()
+        .mockImplementation(async (a, b) => {
+          return `${a}-${b}`
+        })
 
       const wrappedFn = store.getState().operation(mockFn)
       const result = await wrappedFn(42, 'test')
 
       expect(result).toBe('42-test')
       expect(mockFn).toHaveBeenCalledWith(42, 'test')
+    })
+
+    it('should preserve other loading keys when one operation completes', async () => {
+      const store = createTestStore()
+
+      let resolveFirst: (value: string) => void
+      let resolveSecond: (value: string) => void
+
+      // Use named functions to ensure unique ids
+      async function firstOperation(): Promise<string> {
+        return new Promise((resolve) => {
+          resolveFirst = resolve
+        })
+      }
+      async function secondOperation(): Promise<string> {
+        return new Promise((resolve) => {
+          resolveSecond = resolve
+        })
+      }
+
+      const wrappedFirst = store.getState().operation(firstOperation)
+      const wrappedSecond = store.getState().operation(secondOperation)
+
+      // Start both operations
+      const promise1 = wrappedFirst()
+      const promise2 = wrappedSecond()
+
+      // Both should be loading
+      expect(store.getState().isLoading()).toBe(true)
+      expect(store.getState().isLoadingKey(wrappedFirst)).toBe(true)
+      expect(store.getState().isLoadingKey(wrappedSecond)).toBe(true)
+
+      // Complete first operation
+      resolveFirst!('first')
+      await promise1
+
+      // Second should still be loading (this tests line 122 - preserving other keys)
+      expect(store.getState().isLoading()).toBe(true)
+      expect(store.getState().isLoadingKey(wrappedFirst)).toBe(false)
+      expect(store.getState().isLoadingKey(wrappedSecond)).toBe(true)
+
+      // Complete second operation
+      resolveSecond!('second')
+      await promise2
+
+      // Both should be done
+      expect(store.getState().isLoading()).toBe(false)
+    })
+
+    it('should handle non-string and non-array arguments', async () => {
+      const store = createTestStore()
+      const mockFn = jest.fn<(obj: { id: number }) => Promise<string>>().mockResolvedValue('result')
+
+      const wrappedFn = store.getState().operation(mockFn)
+      await wrappedFn({ id: 123 })
+
+      expect(mockFn).toHaveBeenCalledWith({ id: 123 })
     })
   })
 })

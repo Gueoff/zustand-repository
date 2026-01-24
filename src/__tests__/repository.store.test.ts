@@ -21,7 +21,6 @@ const createMockStorage = () => {
     removeItem: (key: string) => {
       delete store[key]
     },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any
 }
 
@@ -116,7 +115,10 @@ describe('createPersistedRepositoryStore', () => {
       (entity) => entity.id,
       { storage: mockStorage },
       (_set, get) => ({
-        findByName: (name) => get().items().find((item) => item.name === name),
+        findByName: (name) =>
+          get()
+            .items()
+            .find((item) => item.name === name),
       }),
     )
 
@@ -168,7 +170,9 @@ describe('createRepositoryStore', () => {
       expect(typeof store.getState().isLoading).toBe('function')
 
       // Should NOT have persist slice
-      expect((store.getState() as unknown as Record<string, unknown>).statusRehydrate).toBeUndefined()
+      expect(
+        (store.getState() as unknown as Record<string, unknown>).statusRehydrate,
+      ).toBeUndefined()
     })
 
     it('should support custom extensions without persistence', () => {
@@ -194,11 +198,9 @@ describe('createRepositoryStore', () => {
     it('should create a persisted store when persist options are provided', () => {
       const mockStorage = createMockStorage()
 
-      const store = createRepositoryStore<TestEntity>(
-        'testRepoStore',
-        (entity) => entity.id,
-        { storage: mockStorage },
-      )
+      const store = createRepositoryStore<TestEntity>('testRepoStore', (entity) => entity.id, {
+        storage: mockStorage,
+      })
 
       // Check repository slice
       expect(typeof store.getState().addOne).toBe('function')
@@ -223,7 +225,10 @@ describe('createRepositoryStore', () => {
         (entity) => entity.id,
         { storage: mockStorage },
         (_set, get) => ({
-          getAllNames: () => get().items().map((item) => item.name),
+          getAllNames: () =>
+            get()
+              .items()
+              .map((item) => item.name),
         }),
       )
 

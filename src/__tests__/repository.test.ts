@@ -152,10 +152,9 @@ describe('createRepositorySlice', () => {
         store.getState().addOne({ id: '1', name: 'Test', value: 10 })
 
         const stateBefore = store.getState().itemsMap
-        store.getState().addOne(
-          { id: '1', name: 'Different', value: 10 },
-          { shallowFields: ['value'] },
-        )
+        store
+          .getState()
+          .addOne({ id: '1', name: 'Different', value: 10 }, { shallowFields: ['value'] })
         const stateAfter = store.getState().itemsMap
 
         expect(stateBefore).toBe(stateAfter)
@@ -164,10 +163,7 @@ describe('createRepositorySlice', () => {
       it('should update if specified fields differ', () => {
         const store = createTestStore()
         store.getState().addOne({ id: '1', name: 'Test', value: 10 })
-        store.getState().addOne(
-          { id: '1', name: 'Test', value: 20 },
-          { shallowFields: ['value'] },
-        )
+        store.getState().addOne({ id: '1', name: 'Test', value: 20 }, { shallowFields: ['value'] })
         expect(store.getState().itemById('1')?.value).toBe(20)
       })
 
@@ -176,10 +172,12 @@ describe('createRepositorySlice', () => {
         store.getState().addOne({ id: '1', name: 'Test', nested: { field: 'value1' } })
 
         const stateBefore = store.getState().itemsMap
-        store.getState().addOne(
-          { id: '1', name: 'Different', nested: { field: 'value1' } },
-          { shallowFields: ['nested.field'] },
-        )
+        store
+          .getState()
+          .addOne(
+            { id: '1', name: 'Different', nested: { field: 'value1' } },
+            { shallowFields: ['nested.field'] },
+          )
         const stateAfter = store.getState().itemsMap
 
         expect(stateBefore).toBe(stateAfter)
@@ -188,10 +186,7 @@ describe('createRepositorySlice', () => {
       it('should process normally with empty shallowFields array', () => {
         const store = createTestStore()
         store.getState().addOne({ id: '1', name: 'Test', value: 10 })
-        store.getState().addOne(
-          { id: '1', name: 'Updated', value: 10 },
-          { shallowFields: [] },
-        )
+        store.getState().addOne({ id: '1', name: 'Updated', value: 10 }, { shallowFields: [] })
         // Empty shallowFields should not skip the update
         expect(store.getState().itemById('1')?.name).toBe('Updated')
       })
@@ -199,10 +194,7 @@ describe('createRepositorySlice', () => {
       it('should check shallowFields on new entity without prior existence', () => {
         const store = createTestStore()
         // Adding an entity that doesn't exist yet with shallowFields
-        store.getState().addOne(
-          { id: '1', name: 'New', value: 10 },
-          { shallowFields: ['value'] },
-        )
+        store.getState().addOne({ id: '1', name: 'New', value: 10 }, { shallowFields: ['value'] })
         expect(store.getState().itemById('1')?.name).toBe('New')
       })
     })
@@ -260,10 +252,12 @@ describe('createRepositorySlice', () => {
         store.getState().addOne({ id: '1', name: 'Test', value: 10 })
 
         // With isClear, shallowFields comparison is skipped
-        store.getState().addOne(
-          { id: '1', name: 'Updated', value: 10 },
-          { isClear: true, shallowFields: ['value'] },
-        )
+        store
+          .getState()
+          .addOne(
+            { id: '1', name: 'Updated', value: 10 },
+            { isClear: true, shallowFields: ['value'] },
+          )
 
         expect(store.getState().itemById('1')?.name).toBe('Updated')
       })

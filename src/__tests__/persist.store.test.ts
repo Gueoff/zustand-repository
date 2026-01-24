@@ -19,7 +19,6 @@ const createMockStorage = () => {
     removeItem: (key: string) => {
       delete store[key]
     },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any
 }
 
