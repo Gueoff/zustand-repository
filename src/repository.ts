@@ -4,7 +4,7 @@ import { shallow } from 'zustand/vanilla/shallow'
 import { GetType, KeyType, ParamsRepository, SetType } from './store.types'
 import { getNestedValue } from './utils/object'
 
-interface BaseRepositoryStore<TEntity> {
+export interface BaseRepositoryStore<TEntity> {
   itemsMap: Record<KeyType, TEntity>
 
   itemCount: () => number
